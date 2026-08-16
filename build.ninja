@@ -1,6 +1,6 @@
-program_name = syshub-display
+program_name = syshub
 tool_todo = addtodo
-main = main
+main = syshub
 mglibc = mglibc
 todo = todo
 
@@ -30,11 +30,15 @@ build $outdir/libs.o: cc $srcdir/compile_libs.c
     includes = -I$mgsrc
 
 ###  OWN  ###
-build $outdir/$main.o: cc $srcdir/$main.c
+build $outdir/$main.o: cc $srcdir/main_syshub.c
     includes = -I$mgsrc
 
 build $outdir/$todo.o: cc $srcdir/main_todo.c
     includes = -I$mgsrc
 
-build $outdir/$program_name: link $outdir/$main.o $outdir/libs.o
+build $outdir/test.o: cc $srcdir/main_test.c
+    includes = -I$mgsrc
+
+build $outdir/$main: link $outdir/$main.o $outdir/libs.o
 build $outdir/$tool_todo: link $outdir/$todo.o $outdir/libs.o
+build $outdir/test: link $outdir/test.o $outdir/libs.o
