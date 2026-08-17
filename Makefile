@@ -6,6 +6,10 @@ build: build-all
 run: build
 	.build/syshub-display test.txt
 
+run-todo: build-todo
+	@todo /fin 2 
+	
+
 test: build.ninja
 	@ninja .build/test
 	@.build/test
@@ -17,6 +21,7 @@ build-syshub:
 	ninja .build/syshub
 
 build-todo: 
-	ninja .build/addtodo
+	ninja .build/todo
+
 
 build-all: build.ninja build-syshub build-todo

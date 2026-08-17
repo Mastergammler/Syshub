@@ -1,5 +1,7 @@
 # Index
 
+[[Architecture]]
+
 **First steps**
 - Create a nice and simple file based todo interface
 

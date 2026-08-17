@@ -1,5 +1,5 @@
 program_name = syshub
-tool_todo = addtodo
+tool_todo = todo
 main = syshub
 mglibc = mglibc
 todo = todo

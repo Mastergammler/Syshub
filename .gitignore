@@ -7,3 +7,6 @@ tags
 .vault
 .index*
 .vault
+test*
+*.db
+*.str

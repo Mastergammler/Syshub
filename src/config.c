@@ -8,7 +8,8 @@ typedef struct
     str value;
 } Kvp;
 
-Kvp* parse_config(Arena* arrMem, str config)
+// NOTE: uses the dynamic memory in between!
+Kvp* parse_config(str config)
 {
     Kvp* array = NULL;
 
@@ -55,44 +56,41 @@ Kvp* parse_config(Arena* arrMem, str config)
     return array;
 }
 
-Config load_config(Arena* alloc, StrPoolOptions opt)
+void match_str(Kvp cur, str name, str* configVal)
+{
+    if (str_ends_with(name, cur.key))
+    {
+        // realloc because we need null termination for posix api
+        *configVal = str_allocn(cur.value.chars, cur.value.len);
+    }
+}
+
+void match_num(Kvp cur, str name, int* num)
+{
+    if (str_ends_with(name, cur.key))
+    {
+        *num = str_parse_n(cur.value).val;
+    }
+}
+
+Config config_load()
 {
     Config config = {};
 
     str home = str_static(getenv("HOME"));
     str configRel = str_static(".config/syshub/config");
     str configPath = str_formatc("%/%", fmt_s(home), fmt_s(configRel));
-
-    FILE* configFile = fopen(configPath.chars, "r");
-    if (!configFile)
-    {
-        str_printc("[ERR] Unable to read config file: %", fmt_s(configPath));
-        return config;
-    }
-
-    fseek(configFile, 0, SEEK_END);
-    int fileLen = ftell(configFile);
-    fseek(configFile, 0, SEEK_SET);
-
-    char* text = pool_use(opt, fileLen);
-    str configContent = {.chars = text, .len = fileLen};
-    fread(text, 1, fileLen, configFile);
-    fclose(configFile);
-
-    // str_print(configContent);
-    Kvp* configArr = parse_config(alloc, configContent);
-
-    /*str_printc("Found config of len %, with % entries", fmt_n(fileLen),
-               fmt_n(arr_len(configArr)));*/
+    str configContent = file_read_all(configPath);
+    Kvp* configArr = parse_config(configContent);
 
     for (int i = 0; i < arr_len(configArr); i++)
     {
         Kvp cur = configArr[i];
-        if (str_ends_with(NAMEOF(Config.todo_file), cur.key))
-        {
-            // need to realloc, to ensure proper null termination
-            config.todo_file = str_allocn(cur.value.chars, cur.value.len);
-        }
+        match_str(cur, NAMEOF(Config.todo_file), &config.todo_file);
+        match_str(cur, NAMEOF(config.todo_db_file), &config.todo_db_file);
+        match_str(cur, NAMEOF(config.todo_strings), &config.todo_strings);
+        match_num(cur, NAMEOF(config.max_col), &config.max_col);
+        match_num(cur, NAMEOF(config.todo_fin_color), &config.todo_fin_color);
     }
 
     return config;
