@@ -12,3 +12,16 @@
 ## Todo
 - [ ] Simple prototype for page switching or something
 - [ ] Switching around different views wile printing to the screen
+
+**Second thought**
+The more i think about it, the less i think it makes sense,
+i'd rather do some [[IPC]] stuff with unix pipes etc.
+I don't think implementing direct buttons would make much sense, and also 
+kind of defeats the purpose of what i'm trying to build.
+
+Even though, for switching ui views, it might make sense.
+But in any case, i'll defer this one for later.
+
+
+
+

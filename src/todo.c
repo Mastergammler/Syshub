@@ -5,8 +5,8 @@ void todo_print(Config config)
 {
     StrPoolOptions opt = {.pool_idx = POOL_DISPLAY};
     str_pool_reset(opt);
-    TodoDb db = todo_read_db(&Prog.dyn_mem, config.todo_db_file);
-    str strings = file_read_all(config.todo_strings);
+    TodoDb db = todo_read_db(&Prog.dyn_mem, config.paths.todo_db);
+    str strings = file_read_all(config.paths.todo_strings);
 
     str lineEl = str_static("_");
     str line = str_repeat(opt, lineEl, config.max_col);
@@ -84,6 +84,31 @@ bool todo_mark_done(str dbPath, int requestedId)
 
     // OPTIMIZE: if it grows, use bin search
     //  -> Because the table would already be sorted
+    for (int i = 0; i < db.header.count; i++)
+    {
+        TodoItem item = db.item_arr[i];
+        if (item.id == requestedId)
+        {
+            FILE* dbFile = fopen(dbPath.chars, "r+");
+            item.done = true;
+
+            int offset = sizeof(TodoDbHeader) + i * sizeof(TodoItem);
+
+            fseek(dbFile, offset, SEEK_SET);
+            fwrite(&item, sizeof(TodoItem), 1, dbFile);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// TODO: mostly the same as mark done, except the specific action
+bool todo_remove(str dbPath, int requestedId)
+{
+    TodoDb db = todo_read_db(&Prog.dyn_mem, dbPath);
+
     for (int i = 0; i < db.header.count; i++)
     {
         TodoItem item = db.item_arr[i];

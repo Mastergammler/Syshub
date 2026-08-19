@@ -11,8 +11,8 @@ int main(int argc, char** argv)
         return 0;
     }
     Config config = config_load();
-    TodoDb db = {.db_file = config.todo_db_file,
-                 .strings_file = config.todo_strings};
+    TodoDb db = {.db_file = config.paths.todo_db,
+                 .strings_file = config.paths.todo_strings};
 
     str firstArg = str_alloc(argv[1]);
     if (str_starts_with(firstArg, str_static("/fin")))
@@ -28,6 +28,16 @@ int main(int argc, char** argv)
         {
             str_printc("-> Todo with the id % not found", fmt_n(requestedId));
         }
+    }
+    else if (str_starts_with(firstArg, str_static("/rm")))
+    {
+        if (argc != 3)
+        {
+            str_printc("Usage: /rm <todo-id>");
+            return 0;
+        }
+
+        int requestedId = atoi(argv[2]);
     }
     else
     {

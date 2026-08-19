@@ -86,12 +86,16 @@ Config config_load()
     for (int i = 0; i < arr_len(configArr); i++)
     {
         Kvp cur = configArr[i];
-        match_str(cur, NAMEOF(Config.todo_file), &config.todo_file);
-        match_str(cur, NAMEOF(config.todo_db_file), &config.todo_db_file);
-        match_str(cur, NAMEOF(config.todo_strings), &config.todo_strings);
-        match_num(cur, NAMEOF(config.max_col), &config.max_col);
-        match_num(cur, NAMEOF(config.todo_fin_color), &config.todo_fin_color);
+        match_str(cur, CONFIG_MAP(config.db_folder));
+        match_num(cur, CONFIG_MAP(config.max_col));
+        match_num(cur, CONFIG_MAP(config.todo_fin_color));
     }
+
+    // TODO: MGLIBC -> some file handling abstractions?
+    config.paths.todo_db =
+        str_formatc("%/%", fmt_s(config.db_folder), fmt_s(TODO_DB));
+    config.paths.todo_strings =
+        str_formatc("%/%", fmt_s(config.db_folder), fmt_s(TODO_STR));
 
     return config;
 }

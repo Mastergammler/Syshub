@@ -1,3 +1,7 @@
 # Syshub tooling
 
-Dependencies: *mglibc*, *sys/inotify*, *unix headers*
+**Dependencies**
+Libs: *mglibc*
+- problems on mac with time headers etc
+Linux: *sys/inotify*
+Posix headers

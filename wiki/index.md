@@ -28,3 +28,8 @@
  -> Have a better overview for times etc
 => *!!! THIS REQUIRES HANDLE DB CONNECTION !!!*
 
+
+[[Simpkm Connection]]
+
+**Common problems**
+[[Refactoring config names]]

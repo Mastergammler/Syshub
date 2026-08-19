@@ -10,3 +10,4 @@ tags
 test*
 *.db
 *.str
+db-tmp/

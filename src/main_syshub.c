@@ -94,10 +94,9 @@ int main(int argc, char** argv)
         return 2;
     }
 
-    StrSplitResult fileNameSplit = str_split_last(config.todo_file, '/');
     // NOTE: we need to watch the parent dir, else it doesn't work
     //  -> becaues nvim replaces the whole file on save
-    int wd = inotify_add_watch(fd, str_cstr(fileNameSplit.head),
+    int wd = inotify_add_watch(fd, str_cstr(config.db_folder),
                                IN_MODIFY | IN_CLOSE_WRITE | IN_MOVED_TO);
     if (wd == -1)
     {

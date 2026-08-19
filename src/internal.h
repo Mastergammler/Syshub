@@ -6,6 +6,12 @@
 #include <string/macros.h>
 #include <string/module.h>
 
+#define TODO_DB str_static("todo.db")
+#define TODO_STR str_static("todo.str")
+#define BU_EXT str_static("bu")
+
+#define CONFIG_MAP(varExpr) NAMEOF(varExpr), &varExpr
+
 typedef enum
 {
     POOL_DEFAULT,
@@ -29,6 +35,6 @@ extern Program Prog;
 Config config_load();
 str file_read_all(str path);
 void init_program(uint64_t memory);
+str build_arg_string(int argc, char** argv, bool includeNl);
 
 #endif
-str build_arg_string(int argc, char** argv, bool includeNl);
