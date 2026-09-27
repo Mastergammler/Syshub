@@ -5,7 +5,9 @@ void todo_print(Config config)
 {
     StrPoolOptions opt = {.pool_idx = POOL_DISPLAY};
     str_pool_reset(opt);
-    TodoDb db = todo_read_db(&Prog.dyn_mem, config.paths.todo_db);
+    TodoDb db = tddb_read_upgrade(&Prog.dyn_mem, config.paths.todo_db);
+    // OPTIMIZE: i can just read from the file stream directly
+    //  -> I don't necessarly need to read the whole file immediately
     str strings = file_read_all(config.paths.todo_strings);
 
     str lineEl = str_static("_");
@@ -19,6 +21,11 @@ void todo_print(Config config)
     for (int i = 0; i < db.header.count; i++)
     {
         TodoItem item = db.item_arr[i];
+        if (item.deleted) continue;
+        if (item.done &&
+            time_older_than_d(item.creation_time, config.hide_age_days))
+            continue;
+
         str ws = item.id > 9 ? ws0 : ws1;
         str text =
             str_sub(strings, item.str_offset, item.str_offset + item.str_len);
@@ -37,119 +44,103 @@ void todo_print(Config config)
         str padRight = {}; // str_repeat(opt, ws1, missing);
 
         str_printc("%%[%] (%) %%%", fmt_s(ansi), fmt_s(ws), fmt_n(item.id),
-                   item.done ? fmt_s(str_static("✔")) : fmt_c(' '), fmt_s(text),
-                   fmt_s(padRight), fmt_s(clear));
+                   item.done ? (FmtHeader*)fmt_s(str_static("✔"))
+                             : (FmtHeader*)fmt_c(' '),
+                   fmt_s(text), fmt_s(padRight), fmt_s(clear));
     }
 }
 
-void todo_add(TodoDb db, str text)
+TodoResult todo_add(Files files, str text)
 {
-    FILE* dbFile = fopen(db.db_file.chars, "r+");
+    TodoDb db = tddb_read_upgrade(&Prog.dyn_mem, files.db);
+
+    FILE* dbFile = fopen(files.db.chars, "r+");
     if (!dbFile)
     {
-        // str_printc("[ERR] File doesn't yet... creating");
-        dbFile = fopen(db.db_file.chars, "w+");
+        dbFile = fopen(files.db.chars, "w+");
     }
-    FILE* stringsFile = fopen(db.strings_file.chars, "a");
+    FILE* stringsFile = fopen(files.strings.chars, "a");
 
-    fread(&db.header, sizeof(db.header), 1, dbFile);
-
-    db.header.max_id++;
-    db.header.count++;
-
-    fseek(dbFile, 0, SEEK_SET);
-    fwrite(&db.header, sizeof(db.header), 1, dbFile);
-    // append text
-    int fileLenB4Write = ftell(stringsFile);
-    fwrite(text.chars, 1, text.len, stringsFile);
-    // str_printc("Printing into file: %", fmt_s(text));
-    fputc('\n', stringsFile);
-
+    db.header = tddb_increment_header(dbFile);
+    int posInFile = append_as_line(stringsFile, text);
     TodoItem newItem = {.id = db.header.max_id,
                         .done = false,
-                        .str_offset = fileLenB4Write,
-                        .str_len = text.len};
+                        .str_offset = posInFile,
+                        .str_len = text.len,
+                        .creation_time = time_utc_now()};
 
-    fseek(dbFile, 0, SEEK_END);
-    fwrite(&newItem, sizeof(TodoItem), 1, dbFile);
+    tddb_write_next_item(dbFile, newItem, STREAM_END);
 
     fclose(dbFile);
     fclose(stringsFile);
+
+    return TODO_OK;
 }
 
-// TODO: actually 3 modes, found, not found, already done
-bool todo_mark_done(str dbPath, int requestedId)
+/*
+ * NOTE: this writes the todo directly as struct
+ * -> Usually I do it property by property
+ * -> maybe i should unify this at some point?
+ */
+void write_todo_at_idx(str dbFilePath, TodoItem item, int idx)
 {
-    TodoDb db = todo_read_db(&Prog.dyn_mem, dbPath);
+    FILE* dbFile = fopen(dbFilePath.chars, "r+");
+    int offset = sizeof(TodoDbHeader) + idx * sizeof(TodoItem);
+    fseek(dbFile, offset, SEEK_SET);
+    fwrite(&item, sizeof(TodoItem), 1, dbFile);
+    fclose(dbFile);
+}
+
+/*
+ * Returns TODO_NO_ACTION in the case the todo is already done
+ */
+TodoResult todo_mark_done(str dbPath, int requestedId)
+{
+    TodoDb db = tddb_read_upgrade(&Prog.dyn_mem, dbPath);
 
     // OPTIMIZE: if it grows, use bin search
     //  -> Because the table would already be sorted
+    //  => YAGNI prolly, because i don't wanna show more than 50 items
+    //     at once anyway?
     for (int i = 0; i < db.header.count; i++)
     {
         TodoItem item = db.item_arr[i];
         if (item.id == requestedId)
         {
-            FILE* dbFile = fopen(dbPath.chars, "r+");
+            if (item.done) return TODO_NO_ACTION;
             item.done = true;
 
-            int offset = sizeof(TodoDbHeader) + i * sizeof(TodoItem);
-
-            fseek(dbFile, offset, SEEK_SET);
-            fwrite(&item, sizeof(TodoItem), 1, dbFile);
-
-            return true;
+            write_todo_at_idx(dbPath, item, i);
+            return TODO_OK;
         }
     }
 
-    return false;
+    return TODO_NOT_FOUND;
 }
 
-// TODO: mostly the same as mark done, except the specific action
-bool todo_remove(str dbPath, int requestedId)
+/*
+ * Does not actually remove the todo, just marks it as deleted
+ *
+ * TODO: File cleanup will implemented on the actual cleanup method
+ * -> Overhead of rewriting everything is too high otherwise
+ * -> Strings would also need to be cleaned up
+ */
+TodoResult todo_remove(str dbPath, int requestedId)
 {
-    TodoDb db = todo_read_db(&Prog.dyn_mem, dbPath);
+    TodoDb db = tddb_read_upgrade(&Prog.dyn_mem, dbPath);
 
     for (int i = 0; i < db.header.count; i++)
     {
         TodoItem item = db.item_arr[i];
         if (item.id == requestedId)
         {
-            FILE* dbFile = fopen(dbPath.chars, "r+");
-            item.done = true;
+            if (item.deleted) return TODO_NO_ACTION;
+            item.deleted = true;
 
-            int offset = sizeof(TodoDbHeader) + i * sizeof(TodoItem);
-
-            fseek(dbFile, offset, SEEK_SET);
-            fwrite(&item, sizeof(TodoItem), 1, dbFile);
-
-            return true;
+            write_todo_at_idx(dbPath, item, i);
+            return TODO_OK;
         }
     }
 
-    return false;
-}
-
-TodoDb todo_read_db(Arena* mem, str dbPath)
-{
-    TodoDb db = {};
-
-    ASSERT(mem->memory, "Memory is uninitialized");
-    arena_reset(mem);
-
-    FILE* dbFile = fopen(dbPath.chars, "r");
-    if (dbFile)
-    {
-        fread(&db.header, sizeof(db.header), 1, dbFile);
-        db.item_arr = arena_use(mem, sizeof(TodoItem) * db.header.count);
-        fread(db.item_arr, sizeof(TodoItem), db.header.count, dbFile);
-
-        // NOTE: fclose is not NULL safe!!!
-        fclose(dbFile);
-    }
-    else
-    {
-        str_printc("[ERR] Db file not found!", fmt_s(dbPath));
-    }
-
-    return db;
+    return TODO_NOT_FOUND;
 }

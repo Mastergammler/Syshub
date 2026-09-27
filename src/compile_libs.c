@@ -6,4 +6,6 @@
 #include "config.c"
 #include "file.c"
 #include "init.c"
+#include "time.c"
 #include "todo.c"
+#include "todo_db.c"

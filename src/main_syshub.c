@@ -6,7 +6,13 @@
 #include <sys/inotify.h>
 #include <unistd.h>
 
-#define EVENT_BUF_SIZE (1024 * (sizeof(struct inotify_event) + 16))
+/**
+ * Allocating space for 64 events in the queue
+ * This should be more than enough, since we're not stacking much events
+ *
+ * +16 is for the variable length filename for the files beeing watched
+ */
+#define EVENT_BUF_SIZE (64 * (sizeof(struct inotify_event) + 16))
 
 #define ANSI_CLS "\033[2J\033[H"
 
@@ -96,8 +102,10 @@ int main(int argc, char** argv)
 
     // NOTE: we need to watch the parent dir, else it doesn't work
     //  -> becaues nvim replaces the whole file on save
+    // WARN: IN_CLOSE_WRITE is triggered every time a writable filestream is
+    // closed -> mode 'r+' will trigger a constant notification
     int wd = inotify_add_watch(fd, str_cstr(config.db_folder),
-                               IN_MODIFY | IN_CLOSE_WRITE | IN_MOVED_TO);
+                               IN_MODIFY | IN_MOVED_TO);
     if (wd == -1)
     {
         str_printc("[ERR] Unalbe to add notify watcher");

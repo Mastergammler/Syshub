@@ -3,6 +3,7 @@ tool_todo = todo
 main = syshub
 mglibc = mglibc
 todo = todo
+bytess = bytess
 
 mgsrc = $$MGLIBC_STRINGS
 # tcc doesn't have debug info ...
@@ -36,9 +37,13 @@ build $outdir/$main.o: cc $srcdir/main_syshub.c
 build $outdir/$todo.o: cc $srcdir/main_todo.c
     includes = -I$mgsrc
 
+build $outdir/$bytess.o: cc $srcdir/main_bytess.c
+    includes = -I$mgsrc
+
 build $outdir/test.o: cc $srcdir/main_test.c
     includes = -I$mgsrc
 
 build $outdir/$main: link $outdir/$main.o $outdir/libs.o
 build $outdir/$tool_todo: link $outdir/$todo.o $outdir/libs.o
+build $outdir/$bytess: link $outdir/$bytess.o $outdir/libs.o
 build $outdir/test: link $outdir/test.o $outdir/libs.o

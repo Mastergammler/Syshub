@@ -2,9 +2,15 @@
 #ticket/open
 
 ## Todos
-- [ ] Tool to push bytes to the start of the file (version / magic)
-- [ ] Implement versioning approach
-- [ ] Create BU files, when version is updated
+- [x] Tool to push bytes to the start of the file (version / magic)
+- [x] Adjust loading via handling version approach
+- [x] Don't remove Padding, because when i write into the table i use offset
+- [x] Implement versioning approach
+- [x] Create BU files, when version is updated
+- [ ] ~Handling invalid header files?~
+- [x] Implement Timestamp
+    - [x] Syshub hide time config value
+
 
 ## Ideas
 - Something like a [[WAD]] file? It needs some header describing the content?
@@ -62,6 +68,37 @@ void write_db(TodoItem item)
 }
 ```
 
+### Writing Sequence
 
+**Problem:** Every write/modify operation requires a db update.
 
+1. Read header
+    -> Check if version changed
+    -> Upgrade header
+2. If version changed, rewrite db
+3. Update the files in question
+
+> Perf is not an issue, because db updates are infrequent
+> -> Single update per version change
+
+=> *Procedure is: [[First upgrade, then modify]]*
+
+**Problem** Rewriting the file while it is already open
+
+1. *Write into open stream*
+    -> If the todos are shorter, there will be garbage at the end
+    => It's more a imperfection, because i read based on count always
+2. Reopen & rewrite the file
+    -> Now i need to reopen the file stream -> more overhead
+    -> I need to reopen twice, because different file modes ...
+
+=> *Garbage at the end is probably very irrelevant & will be overwritten 
+    later anyway, so i think this is fine*
+
+### Issues
+- I can not remove the padding, because i use the size of the Todo item in the 
+  table for writing the offset
+    -> This only applies to cases, where the header already matches
+    -> Else i would rewrite the whole table anyway, but it makes things too 
+       compliacted
 

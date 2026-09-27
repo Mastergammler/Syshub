@@ -89,6 +89,7 @@ Config config_load()
         match_str(cur, CONFIG_MAP(config.db_folder));
         match_num(cur, CONFIG_MAP(config.max_col));
         match_num(cur, CONFIG_MAP(config.todo_fin_color));
+        match_num(cur, CONFIG_MAP(config.hide_age_days));
     }
 
     // TODO: MGLIBC -> some file handling abstractions?

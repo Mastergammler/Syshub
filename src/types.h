@@ -14,6 +14,7 @@ typedef struct
     str db_folder;
     int max_col;
     int todo_fin_color;
+    int hide_age_days;
 
     ConfigPaths paths;
 } Config;
