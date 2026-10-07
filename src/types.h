@@ -1,6 +1,7 @@
 #ifndef SYSHUB_TYPES
 #define SYSHUB_TYPES
 
+#include <stdio.h>
 #include <string/types.h>
 
 typedef struct
@@ -18,5 +19,19 @@ typedef struct
 
     ConfigPaths paths;
 } Config;
+
+typedef struct
+{
+    bool open;
+    FILE* stream;
+    int len;
+    str path;
+} FsRes;
+
+typedef struct
+{
+    int offset;
+    int len;
+} Section;
 
 #endif

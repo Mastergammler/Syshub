@@ -6,9 +6,14 @@ void todo_print(Config config)
     StrPoolOptions opt = {.pool_idx = POOL_DISPLAY};
     str_pool_reset(opt);
     TodoDb db = tddb_read_upgrade(&Prog.dyn_mem, config.paths.todo_db);
-    // OPTIMIZE: i can just read from the file stream directly
-    //  -> I don't necessarly need to read the whole file immediately
-    str strings = file_read_all(config.paths.todo_strings);
+
+    FsRes stringsFile = file_read(config.paths.todo_strings);
+    if (!stringsFile.open)
+    {
+        str_printc("[ERR] Strings file '%' could not be opened (for reading)!",
+                   fmt_s(stringsFile.path));
+        return;
+    }
 
     str lineEl = str_static("_");
     str line = str_repeat(opt, lineEl, config.max_col);
@@ -20,6 +25,8 @@ void todo_print(Config config)
 
     for (int i = 0; i < db.header.count; i++)
     {
+        str_pool_reset(opt);
+
         TodoItem item = db.item_arr[i];
         if (item.deleted) continue;
         if (item.done &&
@@ -27,8 +34,9 @@ void todo_print(Config config)
             continue;
 
         str ws = item.id > 9 ? ws0 : ws1;
-        str text =
-            str_sub(strings, item.str_offset, item.str_offset + item.str_len);
+
+        Section sec = {item.str_offset, item.str_len};
+        str text = file_read_section(stringsFile, sec, opt);
 
         str ansi = {};
         str clear = str_static("\033[0m");
@@ -48,6 +56,8 @@ void todo_print(Config config)
                              : (FmtHeader*)fmt_c(' '),
                    fmt_s(text), fmt_s(padRight), fmt_s(clear));
     }
+
+    file_close(stringsFile);
 }
 
 TodoResult todo_add(Files files, str text)

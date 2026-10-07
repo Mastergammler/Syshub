@@ -1,9 +1,9 @@
 # Fixing timestamp logic
-#ticket/open
+#ticket/closed
 
 ## Todo
-- [ ] Add a done date to the todos
-- [ ] Done filtering based on done date (not creation!)
+- [x] Add a done date to the todos
+- [x] Done filtering based on done date (not creation!)
 
 ## Notes
 *Migration*

@@ -13,7 +13,7 @@ void init_program(uint64_t memory)
 
     str_pool_prepare(Prog.mem_ctx, &Prog.strings, POOL_count);
     define_pool(POOL_DEFAULT, 256, .is_default = true);
-    define_pool(POOL_DISPLAY, 2048);
+    define_pool(POOL_DISPLAY, 512);
     // this limits the length of any print operation to 256,
     // but this should be plenty for the current use case
     define_pool(POOL_PRINT, 256, .is_print = true);

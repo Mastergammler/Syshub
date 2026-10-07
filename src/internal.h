@@ -45,3 +45,6 @@ int append_as_line(FILE* file, str text);
 void copy_file(FILE* stream, str targetFile);
 time_t time_utc_now();
 bool time_older_than_d(time_t compareTime, int days);
+FsRes file_read(str path);
+str file_read_section(FsRes file, Section sec, StrPoolOptions opt);
+void file_close(FsRes res);

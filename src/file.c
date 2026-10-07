@@ -1,5 +1,50 @@
 #include "internal.h"
 
+FsRes file_read(str path)
+{
+    FsRes res = {.path = path};
+    res.stream = fopen(path.chars, "r");
+
+    if (res.stream)
+    {
+        fseek(res.stream, 0, SEEK_END);
+        res.len = ftell(res.stream);
+        res.open = true;
+
+        fseek(res.stream, 0, SEEK_SET);
+    }
+
+    return res;
+}
+
+void file_close(FsRes res)
+{
+    // fclose is NOT null safe
+    if (res.stream) fclose(res.stream);
+}
+
+/*
+ * WARN: Modifies the file stream position
+ */
+str file_read_section(FsRes file, Section sec, StrPoolOptions opt)
+{
+    bool startExceedsLen = file.len < sec.offset;
+    str res = {};
+    if (file.open && !startExceedsLen)
+    {
+        int endPos = min(sec.offset + sec.len, file.len);
+        int validLen = endPos - sec.offset;
+
+        res.len = validLen;
+        res.chars = pool_use(opt, validLen);
+
+        fseek(file.stream, sec.offset, SEEK_SET);
+        fread((void*)res.chars, 1, res.len, file.stream);
+    }
+
+    return res;
+}
+
 str file_read_all(str path)
 {
     FILE* file = fopen(path.chars, "r");
