@@ -70,6 +70,7 @@ void tddb_write_next_item(FILE* dbFile, TodoItem todo, StreamPos pos)
     fwrite(FROM_VAR(todo.str_offset), 1, dbFile);
     fwrite(FROM_VAR(todo.str_len), 1, dbFile);
     fwrite(FROM_VAR(todo.creation_time), 1, dbFile);
+    fwrite(FROM_VAR(todo.completion_time), 1, dbFile);
 }
 
 /**
@@ -129,6 +130,29 @@ TodoItem item_read_next_v3(FILE* dbFile)
     fread(&item.str_len, sizeof(int), 1, dbFile);
     fread(&item.creation_time, sizeof(time_t), 1, dbFile);
 
+    // default value for migration
+    if (item.done) item.completion_time = item.creation_time;
+
+    return item;
+}
+
+/**
+ * v1: id, bool(done,deleted,2 pad), str_offset, str_len, timestamp
+ */
+TodoItem item_read_next_v4(FILE* dbFile)
+{
+    TodoItem item = {};
+    char* devNull[4];
+
+    fread(&item.id, sizeof(int), 1, dbFile);
+    fread(&item.done, sizeof(bool), 1, dbFile);
+    fread(&item.deleted, sizeof(bool), 1, dbFile);
+    fread(devNull, sizeof(bool), 2, dbFile);
+    fread(&item.str_offset, sizeof(int), 1, dbFile);
+    fread(&item.str_len, sizeof(int), 1, dbFile);
+    fread(&item.creation_time, sizeof(time_t), 1, dbFile);
+    fread(&item.completion_time, sizeof(time_t), 1, dbFile);
+
     return item;
 }
 
@@ -139,6 +163,7 @@ TodoItem todo_read_next_item(FILE* dbFile, TodoDbHeader header)
         case 1: return item_read_next_v1(dbFile);
         case 2: return item_read_next_v2(dbFile);
         case 3: return item_read_next_v3(dbFile);
+        case 4: return item_read_next_v4(dbFile);
         default:
         {
             str_printc("DB Version % not implemented!", fmt_n(header.version));

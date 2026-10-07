@@ -1,5 +1,5 @@
 # Migration function & flexible db format
-#ticket/open
+#ticket/closed
 
 ## Todos
 - [x] Tool to push bytes to the start of the file (version / magic)

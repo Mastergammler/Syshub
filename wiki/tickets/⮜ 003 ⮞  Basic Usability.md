@@ -5,8 +5,8 @@
 ## Todos
 - [x] Migrate to folder path instead
 - [x] Fix memory distribution (strDisplay needs the majority)
-- [ ] Remove note function
-- [ ] Add timestamp for filtering
+- [x] Remove note function
+- [x] Add timestamp for filtering
 - [ ] Clear function (store to history file or something?)
 - [ ] Update usage color (green/yellow/red - gray bg)
 

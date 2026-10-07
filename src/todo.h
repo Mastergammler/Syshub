@@ -11,7 +11,7 @@
 static const char TODO_DB_MAGIC[4] = {'T', 'D', 'D', 'B'};
 
 /* Current write version of the db */
-static const int TODO_DB_VERSION = 3;
+static const int TODO_DB_VERSION = 4;
 
 typedef enum
 {
@@ -53,6 +53,7 @@ typedef struct
     int str_offset;
     int str_len;
     time_t creation_time;
+    time_t completion_time;
 
 } TodoItem;
 

@@ -1,6 +1,7 @@
 # Index
 
 [[Architecture]]
+[[Syshub db file format]]
 
 **First steps**
 - Create a nice and simple file based todo interface
@@ -28,8 +29,12 @@
  -> Have a better overview for times etc
 => *!!! THIS REQUIRES HANDLE DB CONNECTION !!!*
 
-
 [[Simpkm Connection]]
+
+
+
+**Processes**
+[[Adding new db values]]
 
 **Common problems**
 [[Refactoring config names]]

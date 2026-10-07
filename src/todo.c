@@ -23,7 +23,7 @@ void todo_print(Config config)
         TodoItem item = db.item_arr[i];
         if (item.deleted) continue;
         if (item.done &&
-            time_older_than_d(item.creation_time, config.hide_age_days))
+            time_older_than_d(item.completion_time, config.hide_age_days))
             continue;
 
         str ws = item.id > 9 ? ws0 : ws1;
@@ -67,7 +67,8 @@ TodoResult todo_add(Files files, str text)
                         .done = false,
                         .str_offset = posInFile,
                         .str_len = text.len,
-                        .creation_time = time_utc_now()};
+                        .creation_time = time_utc_now(),
+                        .completion_time = 0};
 
     tddb_write_next_item(dbFile, newItem, STREAM_END);
 
@@ -109,6 +110,7 @@ TodoResult todo_mark_done(str dbPath, int requestedId)
         {
             if (item.done) return TODO_NO_ACTION;
             item.done = true;
+            item.completion_time = time_utc_now();
 
             write_todo_at_idx(dbPath, item, i);
             return TODO_OK;
